@@ -1,0 +1,5 @@
+build/
+.idea/
+runtime_*.csv
+*.pdf
+__pycache__/

@@ -12,7 +12,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
-
+#include <fstream>
 #include <cmath> // For: fabs
 
 #include <cblas.h>
@@ -66,6 +66,8 @@ int main(int argc, char** argv)
     // preallocate memory buffers for all problems: assume the last number in test_sizes is the largest
 
     // allocate memory for 2 NxN matrices and 4 Nx1 vectors
+    std::ofstream csv("runtime.csv");
+    csv << "problem_size,elapsed_time_sec,correct\n";
 
     int max_size = test_sizes[n_problems-1];
 
@@ -93,22 +95,27 @@ int main(int argc, char** argv)
         memcpy((void *)Ycopy, (const void *)Y, sizeof(double)*n);
 
         // insert start timer code here
-
+        auto start = std::chrono::high_resolution_clock::now();
         // call the method to do the work
         my_dgemv(n, A, X, Y); 
-
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
         // insert end timer code here, and print out the elapsed time for this problem size
 
-
+        printf("N=%d, elapsed_time_sec=%.6f\n", n, elapsed.count());
         // now invoke the cblas method to compute the matrix-vector multiplye
         reference_dgemv(n, Acopy, Xcopy, Ycopy);
 
         // compare your result with that computed by BLAS
-        if (check_accuracy(Ycopy, Y, n) == false)
-           printf(" Error: your answer is not the same as that computed by BLAS. \n");
-    
-    } // end loop over problem sizes
 
+
+        bool ok = check_accuracy(Ycopy, Y, n);
+        if (ok == false)
+            printf(" Error: your answer is not the same as that computed by BLAS. \n");
+
+        csv << n << "," << elapsed.count() << "," << (ok ? "1" : "0") << "\n";
+    } // end loop over problem sizes
+    csv.close();
     return 0;
 }
 
